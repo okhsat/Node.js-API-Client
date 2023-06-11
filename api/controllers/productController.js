@@ -2,7 +2,6 @@ const fastify = require('fastify')({
   logger: true
 });
 const { PrismaClient } = require('@prisma/client');
-const { REPL_MODE_SLOPPY } = require('repl');
 const prisma = new PrismaClient();
 
 // Get all products
@@ -14,6 +13,11 @@ exports.getAll = async (req, rep) => {
 
     } catch (err) {
         fastify.log.error(err);
+
+        rep.code(500).send({
+            status: false,
+            error: err
+        });
     }
 }
 
@@ -46,9 +50,13 @@ exports.add = async (req, rep) => {
             data: req.body
         });
 
+        if ( ! product || Object.keys(product).length === 0 ) {
+            throw new Error('Product not created!');
+        }
+
         return {
             status: true,
-            message: 'Product Created.',
+            message: 'Product created.',
             product: product
         }
 
@@ -66,16 +74,20 @@ exports.add = async (req, rep) => {
 exports.update = async (req, rep) => {
     try {
         const id = Number(req.params.id);
-        let product = prisma.product.update({
+        let product = await prisma.product.update({
             where: { 
                 id: id 
             },
             data: req.body
         });
 
+        if ( ! product || Object.keys(product).length === 0 ) {
+            throw new Error('Product not updated!');
+        }
+
         return {
             status: true,
-            message: 'Product Updated.',
+            message: 'Product updated.',
             product: product
         }
 
@@ -99,9 +111,13 @@ exports.delete = async (req, rep) => {
             }
         });
 
+        if ( ! product || Object.keys(product).length === 0 ) {
+            throw new Error('Product not deleted!');
+        }
+
         return {
             status: true,
-            message: 'Product Deleted.',
+            message: 'Product deleted.',
             product: product
         }
 
